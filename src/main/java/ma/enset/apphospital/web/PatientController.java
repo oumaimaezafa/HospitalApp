@@ -24,11 +24,28 @@ public class PatientController {
     //je creer une methode qui retourne un String permet de retourner un vue
 
     @GetMapping("/index")
-    public String index(Model model, @RequestParam(name = "page",defaultValue = "0") int page,@RequestParam(name = "size",defaultValue = "7") int size){
-        Page<Patient> patients=patientRepository.findAll(PageRequest.of(page,size));//pour afficher une liste de patients
+    public String index(Model model, @RequestParam(name = "page",defaultValue = "0") int page,
+                        @RequestParam(name = "size",defaultValue = "7") int size,
+                        @RequestParam(name = "keyword",defaultValue = "") String kw){
+
+
+        Page<Patient> patients=patientRepository.findByNomContains(kw,PageRequest.of(page,size));//pour afficher une liste de patients
          model.addAttribute("patients",patients.getContent());
          model.addAttribute("pages",new int[patients.getTotalPages()]);
          model.addAttribute("currentPage",page);
+         model.addAttribute("keyword",kw);
+
          return "patients";
     }
+
+    @GetMapping("/delete")
+    public String delete(Long id, @RequestParam(value = "keyword" , defaultValue = "") String keyword, @RequestParam (value = "page", defaultValue ="0") int page){
+        patientRepository.deleteById(id);
+        return "redirect:/index?page="+page+"&keyword="+keyword;
+    }
+    @GetMapping("/")
+    public String home(){
+        return "redirect:/index";
+    }
+
 }
