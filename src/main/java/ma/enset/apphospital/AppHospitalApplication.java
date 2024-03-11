@@ -17,12 +17,14 @@ public class AppHospitalApplication implements CommandLineRunner {
         SpringApplication.run(AppHospitalApplication.class, args);
     }
 
+
+
     @Override
     public void run(String... args) throws Exception {
-        patientRepository.save(new Patient(null,"Oumaima",new Date(),false,34));
+       /* patientRepository.save(new Patient(null,"Oumaima",new Date(),false,34));
         patientRepository.save(new Patient(null,"Duha",new Date(),true,34));
         patientRepository.save(new Patient(null,"Meryem",new Date(),false,74));
-        patientRepository.save(new Patient(null,"lama",new Date(),true,80));
+        patientRepository.save(new Patient(null,"lama",new Date(),true,80));*/
 
 
        /*
