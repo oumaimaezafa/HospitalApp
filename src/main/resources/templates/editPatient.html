@@ -10,7 +10,7 @@
 </head>
 <body>
 <div layout:fragment="content1">
-   <form method="post" th:action="@{save}" class="gap-7">
+   <form method="post" th:action="@{save(page=${page} , keyword=${keyword})}" class="gap-7">
      <div class="col-md-6 offset-3 mt-xl-5">
        <div>
          <label >ID</label>
