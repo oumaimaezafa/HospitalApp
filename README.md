@@ -91,7 +91,22 @@ Tout d'abord, nous ajoutons des dépendances pour utiliser les fonctionnalités 
     </dependencies>
 
 ```
+Ensuite,on  doit configurer les propriétés suivantes dans le fichier de configuration
 
+```java
+server.port=8884
+#spring.datasource.url=jdbc:h2:mem:patients-db
+#spring.h2.console.enabled=true
+spring.datasource.url=jdbc:mysql://localhost:3306/appHospital-db?createDatabaseIfNotExist=true
+spring.datasource.username=root
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MariaDBDialect
+#on peut aussi specifier la format du dat dans properties au lieu des annotations
+#spring.mvc.format.date=yyyy-MM-dd
+
+
+```
 Puis On  crée notre application , on cree les entities  avec des annotations JPA pour faire <code>le mapping objet relationnel</code>  : 
 
 ``` java
@@ -163,9 +178,8 @@ Il  représente la configuration de la sécurité de l'application , On utilisan
 <li><code>@EnableWebSecurity</code> : Cette annotation active la sécurité Web dans l'application. Elle permet de configurer la sécurité des requêtes HTTP</li>
 <li><code>@EnableMethodSecurity(prePostEnabled = true)</code> : Cette annotation active la sécurité basée sur les annotations pour les méthodes de l'application. Elle permet d'utiliser les annotations de sécurité telles que <code >@PreAuthorize</code> et <code>@PostAuthorize</code> pour sécuriser les méthodes.</li>
 <li><code>@PreAuthorize ,@PostAuthorize </code> :  sont utilisées dans les contrôleurs pour restreindre l'accès aux méthodes en fonction des rôles des utilisateurs , On a remplacer ce code la </li>
-<code>
- //http.authorizeRequests().requestMatchers("/user/**").hasRole("USER");
-        //http.authorizeRequests().requestMatchers("/admin/**").hasRole("ADMIN");
+<code>//http.authorizeRequests().requestMatchers("/user/**").hasRole("USER");
+//http.authorizeRequests().requestMatchers("/admin/**").hasRole("ADMIN");
 </code>
 avec l'annotation <code>@EnableMethodSecurity(prePostEnabled = true)</code>
 <li>Pour que Spring puisse comparer les mots de passe, nous utilisons <code>{noop}</code> car cela signifie "no operation", indiquant à Spring de ne pas effectuer de hachage sur les mots de passe.</li></ul>
@@ -222,7 +236,8 @@ public class SecurityConfig {
 ```
 
 <h2>Controller</h2>
-Le Controller Contient 
+Le contrôleur gère les requêtes HTTP pour afficher, ajouter, éditer et supprimer des patients dans l'application. Il utilise des annotations telles que <code>@GetMapping</code> et <code>@PostMapping</code> pour mapper les URL aux méthodes, ainsi que des annotations de sécurité comme <code>@PreAuthorize</code> pour restreindre l'accès aux méthodes en fonction des rôles des utilisateurs , tous ces methodes retourne une vue qui sera affichée dans le navigateur du client.
+Pour envoyer un attribut à une vue dans Spring MVC, on doit  utiliser la méthode <code> addAttribute()</code> de l'objet Model. Cette méthode prend deux arguments : le nom de l'attribut et sa valeur.
 
 ```java
 package ma.enset.apphospital.web;
@@ -305,3 +320,4 @@ public class PatientController {
     }
 }
 ```
+<h2>Template </h2>
