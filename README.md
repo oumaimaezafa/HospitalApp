@@ -325,7 +325,7 @@ public class PatientController {
 D'abord dans la partie web on crée un template  qui sera réutilisé dans toutes les pages au besoin en utilisant le moteur de template <code>Thymeleaf</code> avec la fonctionnalité <code>layout</code> 
 
 
-```java
+```html
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
            xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
