@@ -20,12 +20,6 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    //c'est pour chercher les utilisateurs , preciser en memoire les utilisateurs quiont le droit de faire aurhetification
-   //IL FAUT UTILISER LE PASS ENCODER
-
-
-
     //Configure authentication mechanism
     @Bean
     public InMemoryUserDetailsManager inMemoryUserDetailsManager(){

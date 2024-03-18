@@ -133,6 +133,7 @@ public class Patient {
 <li><code>@DateTimeFormat(pattern = "yyy-MM-dd")</code> : Pour spécifier le format de la date, il est possible de l'inclure directement dans les annotations ou de le définir dans le fichier <code>application.properties</code> avec la clé <code>spring.mvc.format.date=yyyy-MM-dd</code>.</li>
 <li><code>@Temporal(TemporalType.DATE)</code> : indique que seules les informations de date (année, mois et jour) doivent être stockées dans la base de données, sans tenir compte de l'heure.</li>
 </ul>
+
 <h2>Repository</h2>
 Le repository contient une interface <code>PatientRepository</code> qui étend <code>JpaRepository</code>. Cela signifie que PatientRepository hérite de toutes les méthodes définies dans JpaRepository, telles que <code>save()</code>,  <code>findById()</code>,  <code>findAll()</code>,  <code>deleteById()</code>, etc., qui fournissent des fonctionnalités de base pour interagir avec les données des patients en utilisant <code>Spring Data JPA</code>.
 Cette interface peut également contenir des méthodes personnalisées qui utilisent soit <code>les conventions de nommage</code>  de Spring Data JPA, comme<code>findByNomContains()</code>, soit l'annotation <code>@Query</code>, permettant de définir des requêtes spécifiques à la base de données pour des opérations plus complexes.
@@ -153,5 +154,154 @@ public interface PatientRepository  extends JpaRepository<Patient,Long> {
     /*@Query("select  p from Patient p where p.nom like :x")//on utilise les annotations pour definir notre query
        Page<Patient>chercher (@param("x")String keyword,Pageable pageable );*/
 
+}
+```
+<h2>Security</h2>
+Il  représente la configuration de la sécurité de l'application , On utilisant les annotations necessaires  du configuration comme
+<ul>
+<li><code>@Configuration</code> :Indique à Spring que cette classe est une configuration de l'application</li>
+<li><code>@EnableWebSecurity</code> : Cette annotation active la sécurité Web dans l'application. Elle permet de configurer la sécurité des requêtes HTTP</li>
+<li><code>@EnableMethodSecurity(prePostEnabled = true)</code> : Cette annotation active la sécurité basée sur les annotations pour les méthodes de l'application. Elle permet d'utiliser les annotations de sécurité telles que <code >@PreAuthorize</code> et <code>@PostAuthorize</code> pour sécuriser les méthodes.</li>
+<li><code>@PreAuthorize ,@PostAuthorize </code> :  sont utilisées dans les contrôleurs pour restreindre l'accès aux méthodes en fonction des rôles des utilisateurs , On a remplacer ce code la </li>
+<code>
+ //http.authorizeRequests().requestMatchers("/user/**").hasRole("USER");
+        //http.authorizeRequests().requestMatchers("/admin/**").hasRole("ADMIN");
+</code>
+avec l'annotation <code>@EnableMethodSecurity(prePostEnabled = true)</code>
+<li>Pour que Spring puisse comparer les mots de passe, nous utilisons <code>{noop}</code> car cela signifie "no operation", indiquant à Spring de ne pas effectuer de hachage sur les mots de passe.</li></ul>
+
+```java
+package ma.enset.apphospital.security;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+public class SecurityConfig {
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    //Configure authentication mechanism
+    @Bean
+    public InMemoryUserDetailsManager inMemoryUserDetailsManager(){
+        return  new InMemoryUserDetailsManager(
+                User.withUsername("user1").password(passwordEncoder.encode("1234")).roles("USER").build(),
+                User.withUsername("user2").password(passwordEncoder.encode("1234")).roles("USER").build(),
+                User.withUsername("admin").password(passwordEncoder.encode("1234")).roles("USER","ADMIN").build()
+        );
+    }
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.formLogin().loginPage("/login").permitAll();
+        http.rememberMe();
+        http.authorizeRequests().requestMatchers("/webjars/**").permitAll();
+        //http.authorizeRequests().requestMatchers("/user/**").hasRole("USER");
+        //http.authorizeRequests().requestMatchers("/admin/**").hasRole("ADMIN");
+        // POUR AFFICHER UN ERREUR A UN UTILISATEUR QUE N'A PAS LE DROIT
+        http.exceptionHandling().accessDeniedPage("/notAuthorized");
+        http.authorizeRequests()
+                .anyRequest().authenticated();
+        return http.build();
+    }
+
+
+}
+
+```
+
+<h2>Controller</h2>
+Le Controller Contient 
+
+```java
+package ma.enset.apphospital.web;
+
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import ma.enset.apphospital.entities.Patient;
+import ma.enset.apphospital.repository.PatientRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Controller
+@AllArgsConstructor
+public class PatientController {
+    // l'injection se fait via Autowired ou bien via constrecteur
+    private PatientRepository patientRepository;
+
+    //la creation d'une methode qui retourne  une vue de type String 
+
+    @GetMapping("/user/index")
+    public String index(Model model, @RequestParam(name = "page",defaultValue = "0") int page,
+                        @RequestParam(name = "size",defaultValue = "7") int size,
+                        @RequestParam(name = "keyword",defaultValue = "") String kw){
+
+
+        Page<Patient> patients=patientRepository.findByNomContains(kw,PageRequest.of(page,size));//pour afficher une liste de patients
+         model.addAttribute("patients",patients.getContent());
+         model.addAttribute("pages",new int[patients.getTotalPages()]);
+         model.addAttribute("currentPage",page);
+         model.addAttribute("keyword",kw);
+
+         return "patients";
+    }
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/admin/delete")
+    public String delete(Long id, @RequestParam(value = "keyword" , defaultValue = "") String keyword, @RequestParam (value = "page", defaultValue ="0") int page){
+        patientRepository.deleteById(id);
+        return "redirect:/user/index?page="+page+"&keyword="+keyword;
+    }
+    @GetMapping("/")
+    public String home(){
+        return "redirect:/user/index";
+    }
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/admin/formPatients")
+    public String formPatient(Model model){
+        model.addAttribute("patient",new Patient());
+        return "formPatients";
+    }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping(path = "/admin/save")
+    public String save(Model model, @Valid Patient patient, BindingResult bindingResult,@RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "") String keyword){
+        if (bindingResult.hasErrors())return  "formPatients";
+        patientRepository.save(patient);
+        return "redirect:/user/index?page="+page+"&keyword="+keyword;
+    }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/admin/editPatient")
+    public String editPatient(Model model,Long id,String keyword,int page ){
+        Patient patient=patientRepository.findById(id).orElse(null);
+        if(patient ==null) throw  new RuntimeException("Patient introuvable !!");
+        model.addAttribute("patient",patient);
+        model.addAttribute("page",page);
+        model.addAttribute("keyword",keyword);
+        return "editPatient";
+    }
 }
 ```
