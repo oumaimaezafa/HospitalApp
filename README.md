@@ -12,6 +12,7 @@ Cette activité est une application Web JEE basée sur Spring MVC, Thymeleaf et 
   <li>Faire la validation des formulaires</li>
   <li>Faire la sécurité avec Spring Security</li>
 </ul>
+
 Tout d'abord, nous ajoutons des dépendances pour utiliser les fonctionnalités de Spring en modifiant le fichier <code>pom.xml</code>  comme suit :
 
 ```java
@@ -321,3 +322,62 @@ public class PatientController {
 }
 ```
 <h2>Template </h2>
+D'abord dans la partie web on crée un template  qui sera réutilisé dans toutes les pages au besoin en utilisant le moteur de template <code>Thymeleaf</code> avec la fonctionnalité <code>layout</code> 
+```java
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+           xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css">
+    <script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+    <div class="container-fluid">
+
+        <div class="collapse navbar-collapse" id="mynavbar">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/user/index}">Home</a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Patients</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:if="${#authorization.expression('hasRole(''ADMIN'')')}" th:href="@{/admin/formPatients}">Nouveau Patient</a></li>
+                        <li><a class="dropdown-item" th:href="@{/user/index}">Chercher Patient </a></li>
+                    </ul>
+                </li>
+            </ul>
+            <ul class="navbar-nav ">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" th:text="${#authentication.name}"></a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <form method="post" th:action="@{/logout}">
+                                <button  class="dropdown-item" type="submit" >Logout</button>
+
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+
+            </ul>
+
+        </div>
+    </div>
+</nav>
+<section layout:fragment="content1">
+
+</section>
+</body>
+</html>
+```
+<img src="images/login.PNG">
+<img src="images/admin.PNG">
+<img src="images/admin2.PNG">
+<img src="images/user1.PNG">
+<img src="images/user2.PNG">
